@@ -1,0 +1,30 @@
+{
+  "name": "mini-frameworks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:utils": "pnpm run --filter @frankcao/utils build",
+    "build:reactivity": "pnpm run --filter @frankcao/reactivity build",
+    "build": "pnpm run  --filter=\"@frankcao/*\"  build ",
+    "test": "vitest packages/",
+    "test:once": "vitest run packages/",
+    "coverage": "vitest run --coverage",
+    "lint":"eslint packages/**/src",
+    "lint:fix":"eslint packages/**/src --fix"
+  },
+  "dependencies": {
+
+  },
+  "devDependencies": {
+    "typescript": "^4.8.4",
+    "unbuild": "^0.9.4",
+    "vitest": "^0.24.5",
+    "@antfu/eslint-config": "^0.29.3",
+    "@vitest/coverage-c8": "^0.24.5",
+    "eslint": "^8.26.0"
+  },
+  "keywords": [],
+  "author": "frankcao",
+  "license": "ISC"
+}
