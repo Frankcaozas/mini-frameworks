@@ -18,6 +18,15 @@ importers:
       unbuild: registry.npmmirror.com/unbuild/0.9.4
       vitest: registry.npmmirror.com/vitest/0.24.5
 
+  packages/reactivity:
+    specifiers:
+      '@frankcao/utils': workspace:*
+    dependencies:
+      '@frankcao/utils': link:../utils
+
+  packages/utils:
+    specifiers: {}
+
 packages:
 
   registry.npmmirror.com/@ampproject/remapping/2.2.0:

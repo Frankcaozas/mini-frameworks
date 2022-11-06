@@ -9,6 +9,9 @@
     "build": "unbuild",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "dependencies":{
+    "@frankcao/utils":"workspace:*"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"
