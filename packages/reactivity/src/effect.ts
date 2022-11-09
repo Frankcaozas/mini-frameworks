@@ -30,6 +30,8 @@ export function trigger(target: object, key: string | symbol) {
 
 export function effect(fn: Function) {
   activeEffect = fn
+  effectStack.push(fn)
   fn()
-  activeEffect = null
+  effectStack.pop()
+  activeEffect = effectStack[effectStack.length - 1]
 }
