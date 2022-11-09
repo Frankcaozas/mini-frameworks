@@ -23,9 +23,8 @@ export function trigger(target: object, key: string | symbol) {
     return
   const deps = depsMap.get(key)
   if (deps) {
-    deps.forEach((effect) => {
-      effect()
-    })
+    for (const fn of deps)
+      fn()
   }
 }
 
