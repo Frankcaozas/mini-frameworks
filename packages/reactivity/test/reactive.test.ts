@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { effect } from '../src/effect'
 import { reactive } from '../src/reactivity'
 import { ref } from '../src/ref'
@@ -36,6 +36,24 @@ describe('reactive', () => {
     expect(val).toBe(1)
 
     num.value.count++
+    expect(val).toBe(2)
+  })
+
+  it('why reflect', () => {
+    const obj = {
+      _count: 1,
+      get count() {
+        return this._count
+      },
+    }
+    const res = reactive(obj)
+    let val
+    effect(() => {
+      val = res.count
+    })
+
+    expect(val).toBe(1)
+    res._count++
     expect(val).toBe(2)
   })
 })
