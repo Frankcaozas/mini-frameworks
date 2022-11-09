@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { effect } from '../src/effect'
 import { reactive } from '../src/reactivity'
 import { ref } from '../src/ref'
@@ -14,6 +14,17 @@ describe('reactive', () => {
 
     obj.count++
     expect(val).toBe(2) // effect副作用执行了
+  })
+
+  it('reactive suppourt nested object', () => {
+    const proxyObj = reactive({ count: 1, person: { name: 'wupeng' } })
+    let name
+    effect(() => {
+      name = proxyObj.person.name
+    })
+    expect(name).toBe('wupeng')
+    proxyObj.person.name = 'frankcao'
+    expect(name).toBe('frankcao')
   })
 
   it('ref', () => {

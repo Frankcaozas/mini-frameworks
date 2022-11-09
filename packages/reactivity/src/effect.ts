@@ -1,6 +1,6 @@
 const targetMap = new WeakMap()
 let activeEffect: Function | null
-
+const effectStack: Function[] = []
 export function track(target: object, key: string | symbol) {
   if (!activeEffect)
     return
