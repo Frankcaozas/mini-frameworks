@@ -27,6 +27,17 @@ describe('reactive', () => {
     expect(name).toBe('frankcao')
   })
 
+  it('reactive deleteProperty', () => {
+    const proxyObj = reactive({ count: 1, person: { name: 'wupeng' } })
+    let val
+    effect(() => {
+      val = proxyObj.person.name
+    })
+    expect(val).toBe('wupeng')
+    delete proxyObj.person.name
+    expect(val).toBeUndefined()
+  })
+
   it('ref', () => {
     const num = ref(1)
     let val

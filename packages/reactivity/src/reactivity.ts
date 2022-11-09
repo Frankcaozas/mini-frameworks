@@ -16,5 +16,10 @@ export function reactive<T extends object>(obj: T): T {
       return success
       // return true
     },
+    deleteProperty(target, key) {
+      const res = Reflect.deleteProperty(target, key)
+      trigger(target, key)
+      return res
+    },
   })
 }

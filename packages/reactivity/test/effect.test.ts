@@ -6,7 +6,7 @@ describe('effect', () => {
     const data = { foo: 1, bar: 2 }
     const obj = reactive(data)
     let tmp1, tmp2
-    const fn1 = vi.fn(() => {}) // vi.fn包裹之后，就可以测试这个函数执行了多少次
+    const fn1 = vi.fn(() => {})
     const fn2 = vi.fn(() => {})
 
     effect(() => {
