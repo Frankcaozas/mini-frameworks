@@ -79,3 +79,27 @@ describe('reactive', () => {
     expect(val).toBe(2)
   })
 })
+
+describe('支持set/map', () => {
+  it('set', () => {
+    const set = reactive(new Set([1]))
+    let val
+    effect(() => {
+      val = set.size
+    })
+    expect(val).toBe(1)
+    set.add(2)
+    expect(val).toBe(2)
+  })
+  // @todo 作业
+  it('set的删除', () => {
+    const set = reactive(new Set([1, 2]))
+    let val
+    effect(() => {
+      val = set.size
+    })
+    expect(val).toBe(2)
+    set.delete(2)
+    expect(val).toBe(1)
+  })
+})
