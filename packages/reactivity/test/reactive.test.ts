@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { effect } from '../src/effect'
-import { reactive } from '../src/reactivity'
-import { ref } from '../src/ref'
+import { isReactive, reactive, shallowReactive } from '../src/reactivity'
+import { isRef, ref } from '../src/ref'
 
 describe('reactive', () => {
   it('reactive基本功能', () => {
@@ -101,5 +101,50 @@ describe('支持set/map', () => {
     expect(val).toBe(2)
     set.delete(2)
     expect(val).toBe(1)
+  })
+  it('set has', () => {
+    const set = reactive(new Set([1, 2]))
+    expect(set.has(2)).toBe(true)
+    set.delete(2)
+    expect(set.has(2)).toBe(false)
+  })
+
+  describe('shallow reactive', () => {
+    it('shallow', () => {
+      const proxyObj = shallowReactive({ count: 1, person: { name: 'wupeng' } })
+      let val1, val2
+      effect(() => {
+        val1 = proxyObj.person.name
+      })
+      effect(() => {
+        val2 = proxyObj.count
+      })
+      expect(val1).toBe('wupeng')
+      expect(val2).toBe(1)
+      proxyObj.count++
+      proxyObj.person.name = 'aaa'
+      expect(val2).toBe(2)
+      expect(val1).toBe('wupeng')
+    })
+  })
+
+  describe('isReactive isRef', () => {
+    it('isReactive', () => {
+      const obj1 = { cnt: 1 }
+      const obj2 = reactive({ cnt: 1 })
+      const res1 = isReactive(obj1)
+      const res2 = isReactive(obj2)
+      expect(res1).toBe(false)
+      expect(res2).toBe(true)
+    })
+
+    it('isRef', () => {
+      const obj1 = 1
+      const obj2 = ref(1)
+      const res1 = isRef(obj1)
+      const res2 = isRef(obj2)
+      expect(res1).toBe(false)
+      expect(res2).toBe(true)
+    })
   })
 })

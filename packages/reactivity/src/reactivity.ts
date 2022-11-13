@@ -1,8 +1,10 @@
-import { isObject, toRawType } from '@frankcao/utils'
-import { track, trigger } from './effect'
+import { toRawType } from '@frankcao/utils'
+import { baseHandler, baseShallowReactiveHandlers } from './baseHandlers'
+import { collectionHandler } from './collectionHandlers'
 
 export const enum ReactiveFlags {
-  RAW = '__raw',
+  RAW = '__v_raw',
+  IS_REACTIVE = '__is_reactive',
 }
 
 const enum TargetType {
@@ -28,56 +30,16 @@ function targetTypeMap(rawType: string) {
   }
 }
 
-const baseHandler = {
-  get(target, key, receiver) {
-    const val = Reflect.get(target, key, receiver)
-    track(target, key, 'get')
-    return isObject(val) ? reactive(val) : val
-    // return target[key]
-  },
-  set(target, key, val, receiver) {
-    const success = Reflect.set(target, key, val, receiver)
-    // target[key] = val
-    trigger(target, key, 'set')
-    return success
-    // return true
-  },
-  deleteProperty(target, key) {
-    const res = Reflect.deleteProperty(target, key)
-    trigger(target, key, 'delete')
-    return res
-  },
-}
-
-const collectionHandler = {
-  get(target, key, receiver) {
-    if (key === ReactiveFlags.RAW)
-      return target
-    if (key === 'size') {
-      track(target, ITERATE_KEY, 'collection-size')
-      return Reflect.get(target, key)
-    }
-    return collectionActions[key]
-  },
-}
-
-const collectionActions = {
-  add(key) {
-    const target = this[ReactiveFlags.RAW]
-    const ret = target.add(key)
-    trigger(target, key, 'collection-add')
-    return ret
-  },
-  delete(key) {
-    const target = this[ReactiveFlags.RAW]
-    const res = target.delete(key)
-    trigger(target, key, 'collection-delete')
-    return res
-  },
-  has() {},
+export function isReactive(val: any) {
+  return !!val[ReactiveFlags.IS_REACTIVE]
 }
 
 export function reactive<T extends object>(obj: T): T {
   const handler = targetTypeMap(toRawType(obj)) === TargetType.COMMON ? baseHandler : collectionHandler
+  return new Proxy(obj, handler)
+}
+
+export function shallowReactive<T extends object>(obj: T): T {
+  const handler = targetTypeMap(toRawType(obj)) === TargetType.COMMON ? baseShallowReactiveHandlers : collectionHandler
   return new Proxy(obj, handler)
 }

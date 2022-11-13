@@ -22,7 +22,7 @@ export function trigger(target: object, key: string | symbol, type: string) {
   const depsMap = targetMap.get(target)
   if (!depsMap)
     return
-  if (type === 'collection-add' || type === 'collection-delete')
+  if (type === 'collection-add' || type === 'collection-delete' || type === 'collection-has')
     key = ITERATE_KEY
 
   const deps = depsMap.get(key)

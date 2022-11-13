@@ -9,14 +9,14 @@ class RefImplement {
   }
 
   get value() {
-    track(this, 'value')
+    track(this, 'value', 'ref-get')
     return this.val
   }
 
   set value(newVal: any) {
     if (newVal !== this.val) {
       this.val = newVal
-      trigger(this, 'value')
+      trigger(this, 'value', 'ref-set')
     }
   }
 }
@@ -24,6 +24,9 @@ function convert(val: any) {
   return isObject(val) ? reactive(val) : val
 }
 
+export function isRef(val: any) {
+  return !!val.isRef
+}
 export function ref(val: any) {
   return new RefImplement(val)
 }
