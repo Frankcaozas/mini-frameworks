@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { effect } from '../src/effect'
 import { isReactive, reactive, shallowReactive } from '../src/reactivity'
 import { isRef, ref } from '../src/ref'
@@ -146,5 +146,26 @@ describe('支持set/map', () => {
       expect(res1).toBe(false)
       expect(res2).toBe(true)
     })
+  })
+
+  it('响应式的清理', () => {
+    const obj = reactive({
+      ok: true,
+      name: 'dasheng',
+    })
+    let val
+    const fn = vi.fn(() => {
+      val = obj.ok ? obj.name : 'vue3'
+    })
+    effect(fn)
+    expect(val).toBe('dasheng')
+    expect(fn).toBeCalledTimes(1)
+
+    obj.ok = false
+    expect(val).toBe('vue3')
+    expect(fn).toBeCalledTimes(2)
+
+    obj.name = 'xiaosheng'
+    expect(fn).toBeCalledTimes(2)
   })
 })
