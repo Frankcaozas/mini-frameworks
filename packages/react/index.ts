@@ -6,6 +6,11 @@ interface VNode {
   }
 }
 
+interface Props {
+  [key: string]: any
+  children?: VNode[]
+}
+
 type Fiber = VNode & {
   dom: HTMLElement | Text | null
   parent: Fiber | null
@@ -36,7 +41,9 @@ function createTextElement(text: string) {
 }
 
 const isProperty = (key: string) => key !== 'children'
-
+const isEvent = (key: string) => key.startsWith('on')
+const isGone = (preProps: Props, nextProps: Props) => (key: string) => !(key in nextProps)
+const isNew = (preProps: Props, nextProps: Props) => (key: string) => preProps[key] !== nextProps[key]
 function createDOM(fiber: Fiber) {
   const dom = fiber.type === 'TEXT_ELEMENT'
     ? document.createTextNode('')
@@ -61,9 +68,31 @@ function commitRoot() {
 function commitWork(fiber: Fiber | null) {
   if (!fiber)
     return
-  fiber.parent?.dom?.appendChild(fiber.dom!)
+  const domParent = fiber.parent?.dom
+  if (fiber.effectTag === 'PLACEMENT' && fiber.dom && domParent)
+    domParent.appendChild(fiber.dom)
+  if (fiber.effectTag === 'PLACEMENT' && fiber.dom)
+    updateDom(fiber.dom, fiber.alternate!.props, fiber.props)
+
+  if (fiber.effectTag === 'DELETION' && fiber.dom && domParent)
+    domParent.removeChild(fiber.dom)
+
   commitWork(fiber.child)
   commitWork(fiber.sibling)
+}
+
+function updateDom(dom: HTMLElement | Text, preProps: Props, nextProps: Props) {
+  // delete keys which are gone
+  Object.keys(preProps)
+    .filter(isProperty)
+    .filter(isGone(preProps, nextProps))
+    .forEach(key => dom[key] = '')
+
+  // update changed or new keys
+  Object.keys(nextProps)
+    .filter(isProperty)
+    .filter(isNew(preProps, nextProps))
+    .forEach(key => dom[key] = nextProps[key])
 }
 
 function render(element: VNode, container: HTMLElement) {
@@ -99,7 +128,7 @@ function performUnitOfWork(fiber: Fiber): Fiber | null {
     fiber.parent.dom?.appendChild(fiber.dom)
 
   const elements = fiber.props.children
-  reconcileChildren(fiber, elements)
+  reconcileChildren(fiber, elements!)
 
   if (fiber.child)
     return fiber.child
