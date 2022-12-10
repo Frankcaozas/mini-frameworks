@@ -10,6 +10,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "jsx": "react-jsx"
   },
   "exclude": [
     "dist",

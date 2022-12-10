@@ -1,5 +1,5 @@
 interface VNode {
-  type: string
+  type: string | Function
   props: {
     [key: string]: any
     children: VNode[]
@@ -30,7 +30,7 @@ function createElement(type: string, props: any, ...children: (object | string)[
   }
 }
 
-function createTextElement(text: string) {
+function createTextElement(text: string): VNode {
   return {
     type: 'TEXT_ELEMENT',
     props: {
@@ -39,17 +39,19 @@ function createTextElement(text: string) {
     },
   }
 }
-
-const isProperty = (key: string) => key !== 'children'
 const isEvent = (key: string) => key.startsWith('on')
+const isProperty = (key: string) => key !== 'children' && !isEvent(key)
 const isGone = (preProps: Props, nextProps: Props) => (key: string) => !(key in nextProps)
 const isNew = (preProps: Props, nextProps: Props) => (key: string) => preProps[key] !== nextProps[key]
 function createDOM(fiber: Fiber) {
-  const dom = fiber.type === 'TEXT_ELEMENT'
-    ? document.createTextNode('')
-    : document.createElement(fiber.type)
-  Object.keys(fiber.props).filter(isProperty).forEach(key => dom[key] = fiber.props[key])
-  return dom
+  if (typeof fiber.type === 'string') {
+    const dom = fiber.type === 'TEXT_ELEMENT'
+      ? document.createTextNode('')
+      : document.createElement(fiber.type)
+    Object.keys(fiber.props).filter(isProperty).forEach(key => dom[key] = fiber.props[key])
+    return dom
+  }
+  return null
 }
 
 let nextUnitOfWork: Fiber | null = null
@@ -68,17 +70,32 @@ function commitRoot() {
 function commitWork(fiber: Fiber | null) {
   if (!fiber)
     return
-  const domParent = fiber.parent?.dom
+  let domParentFiber = fiber.parent
+  while (!domParentFiber?.dom && domParentFiber?.parent)
+    domParentFiber = domParentFiber.parent
+
+  const domParent = domParentFiber!.dom
+
   if (fiber.effectTag === 'PLACEMENT' && fiber.dom && domParent)
     domParent.appendChild(fiber.dom)
-  if (fiber.effectTag === 'PLACEMENT' && fiber.dom)
+  if (fiber.effectTag === 'UPDATE' && fiber.dom)
     updateDom(fiber.dom, fiber.alternate!.props, fiber.props)
 
   if (fiber.effectTag === 'DELETION' && fiber.dom && domParent)
-    domParent.removeChild(fiber.dom)
+    commitDeletion(fiber, domParent)
 
   commitWork(fiber.child)
   commitWork(fiber.sibling)
+}
+
+function commitDeletion(fiber: Fiber | null, domParent: HTMLElement | Text) {
+  if (!fiber)
+    return
+  if (fiber.dom)
+    domParent.removeChild(fiber.dom)
+
+  else
+    commitDeletion(fiber.child, domParent)
 }
 
 function updateDom(dom: HTMLElement | Text, preProps: Props, nextProps: Props) {
@@ -87,12 +104,27 @@ function updateDom(dom: HTMLElement | Text, preProps: Props, nextProps: Props) {
     .filter(isProperty)
     .filter(isGone(preProps, nextProps))
     .forEach(key => dom[key] = '')
-
+  // remove event listeners
+  Object.keys(preProps)
+    .filter(isEvent)
+    .filter(key => !(key in nextProps) || isNew(preProps, nextProps)(key))
+    .forEach((name) => {
+      const eventType = name.toLowerCase().substring(2)
+      dom.removeEventListener(eventType, preProps[eventType])
+    })
   // update changed or new keys
   Object.keys(nextProps)
     .filter(isProperty)
     .filter(isNew(preProps, nextProps))
     .forEach(key => dom[key] = nextProps[key])
+  // bind event listeners
+  Object.keys(nextProps)
+    .filter(isEvent)
+    .filter(isNew(preProps, nextProps))
+    .forEach((name) => {
+      const eventType = name.toLowerCase().substring(2)
+      dom.addEventListener(eventType, nextProps[name])
+    })
 }
 
 function render(element: VNode, container: HTMLElement) {
@@ -102,6 +134,7 @@ function render(element: VNode, container: HTMLElement) {
     props: {
       children: [element],
     },
+    alternate: currentRoot,
     child: null,
     parent: null,
     sibling: null,
@@ -116,19 +149,21 @@ function workloop(deadline: IdleDeadline) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
     shouldYield = deadline.timeRemaining() < 1
   }
+
+  if (!nextUnitOfWork && wipRoot)
+    commitRoot()
+
   requestIdleCallback(workloop)
 }
 
 requestIdleCallback(workloop)
 
 function performUnitOfWork(fiber: Fiber): Fiber | null {
-  if (!fiber.dom)
-    fiber.dom = createDOM(fiber)
-  if (fiber.parent)
-    fiber.parent.dom?.appendChild(fiber.dom)
+  if (fiber.type instanceof Function)
+    updateFuntionComponent(fiber)
 
-  const elements = fiber.props.children
-  reconcileChildren(fiber, elements!)
+  else
+    updateHostComponent(fiber)
 
   if (fiber.child)
     return fiber.child
@@ -191,8 +226,22 @@ function reconcileChildren(wipFiber: Fiber, elements: VNode[]) {
   }
 }
 
-const React = {
-  createElement,
-  createTextElement,
+function updateFuntionComponent(fiber: Fiber) {
+  if (fiber.type instanceof Function) {
+    const children = [fiber.type(fiber.props)]
+    reconcileChildren(fiber, children)
+  }
 }
-export default React
+
+function updateHostComponent(fiber: Fiber) {
+  if (!fiber.dom)
+    fiber.dom = createDOM(fiber)
+  const elements = fiber.props.children
+  reconcileChildren(fiber, elements!)
+}
+
+export const React = {
+  createElement,
+  render,
+}
+
