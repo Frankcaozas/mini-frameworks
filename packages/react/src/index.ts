@@ -295,7 +295,7 @@ export const React = {
   useState,
 }
 
-export const ReactDom = {
+export const ReactDOM = {
   render,
 }
 

@@ -20,10 +20,12 @@ importers:
 
   examples/React:
     specifiers:
+      '@frankcao/react': workspace:*
       react: 18.0.0
       react-dom: 18.0.0
       react-scripts: 3.0.1
     dependencies:
+      '@frankcao/react': link:../../packages/react
       react: 18.0.0
       react-dom: 18.0.0_react@18.0.0
       react-scripts: 3.0.1_react@18.0.0

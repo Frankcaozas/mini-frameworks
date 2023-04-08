@@ -9,7 +9,7 @@ class RefImplement {
   }
 
   get value() {
-    track(this, 'value', 'ref-get')
+    track(this, 'ref-get')
     return this.val
   }
 
