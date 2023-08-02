@@ -1,7 +1,7 @@
 # mini-frameworks
 React的mini版实现
 
-包括RSC（React Server Component):
+[React Server Component](https://github.com/Frankcaozas/react-server-component)
 
 
 ## examples
